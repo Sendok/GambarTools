@@ -9,6 +9,7 @@ import {
   Scissors,
   Paintbrush,
   Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import { generateBackgroundFromPrompt } from '@/ai/flows/generate-background-from-prompt';
 import { suggestColorBackground } from '@/ai/flows/suggest-color-background';
@@ -53,6 +54,8 @@ export function ImageEditor() {
 
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(800);
+  const [originalWidth, setOriginalWidth] = useState(800);
+  const [originalHeight, setOriginalHeight] = useState(800);
 
   const triggerActionWithAd = (action: () => Promise<void>) => {
     // For demonstration, we assume the user is not premium
@@ -71,6 +74,8 @@ export function ImageEditor() {
             const result = e.target?.result as string;
             const img = new window.Image();
             img.onload = () => {
+              setOriginalWidth(img.width);
+              setOriginalHeight(img.height);
               setWidth(img.width);
               setHeight(img.height);
               setImage(result);
@@ -180,11 +185,97 @@ export function ImageEditor() {
   };
 
   const handleDownload = () => {
+    if (!processedImage) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create image canvas.',
+      });
+      return;
+    }
+
+    const drawProductImage = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const hRatio = canvas.width / img.width;
+        const vRatio = canvas.height / img.height;
+        const ratio = Math.min(hRatio, vRatio) * 0.8;
+        const newWidth = img.width * ratio;
+        const newHeight = img.height * ratio;
+        const x = (canvas.width - newWidth) / 2;
+        const y = (canvas.height - newHeight) / 2;
+
+        ctx.drawImage(img, x, y, newWidth, newHeight);
+
+        const link = document.createElement('a');
+        link.download = 'edited-image.png';
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: 'Download Started',
+          description: 'Your image is being prepared.',
+        });
+      };
+      img.onerror = () => {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load product image for download.',
+        });
+      };
+      img.src = processedImage;
+    };
+
+    if (background.startsWith('url')) {
+      const bgImg = new window.Image();
+      bgImg.crossOrigin = 'Anonymous';
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        drawProductImage();
+      };
+      bgImg.onerror = () => {
+        ctx.fillStyle = 'hsl(var(--card))';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawProductImage();
+      };
+      const bgUrl = background.match(/url\("?(.*?)"?\)/)?.[1];
+      if (bgUrl) {
+        bgImg.src = bgUrl;
+      } else {
+        ctx.fillStyle = 'hsl(var(--card))';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawProductImage();
+      }
+    } else {
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawProductImage();
+    }
+  };
+
+  const handleReset = () => {
+    if (!image) return;
+    setProcessedImage(image);
+    setBackground('hsl(var(--card))');
+    setWidth(originalWidth);
+    setHeight(originalHeight);
+    setPrompt('');
+    setSuggestion(null);
+    setActiveTool('resize');
     toast({
-      title: 'Download Started',
-      description: 'Your image is being prepared.',
+      title: 'Image Reset',
+      description: 'All edits have been reverted.',
     });
-    // This is a placeholder for actual download logic
   };
 
   if (!image) {
@@ -360,10 +451,21 @@ export function ImageEditor() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <Button onClick={handleDownload} size="lg" className="w-full mt-6">
-              <Download className="mr-2 h-5 w-5" />
-              Download Image
-            </Button>
+            <div className="mt-6 flex flex-col gap-2">
+              <Button onClick={handleDownload} size="lg" className="w-full">
+                <Download className="mr-2 h-5 w-5" />
+                Download Image
+              </Button>
+              <Button
+                onClick={handleReset}
+                size="lg"
+                className="w-full"
+                variant="outline"
+              >
+                <RotateCcw className="mr-2 h-5 w-5" />
+                Reset Image
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <div
