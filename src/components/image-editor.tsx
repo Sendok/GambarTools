@@ -51,44 +51,56 @@ export function ImageEditor() {
   const [showAdModal, setShowAdModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
 
+  const [width, setWidth] = useState(800);
+  const [height, setHeight] = useState(800);
+
   const triggerActionWithAd = (action: () => Promise<void>) => {
     // For demonstration, we assume the user is not premium
     setPendingAction(() => action);
     setShowAdModal(true);
   };
 
-  const handleFileChange = useCallback((files: FileList | null) => {
-    if (files && files[0]) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadstart = () => setIsProcessing(true);
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          setImage(result);
-          // Simulate background removal and set as processedImage
-          // In a real app, this would be an API call
-          setTimeout(() => {
-            setProcessedImage(result);
+  const handleFileChange = useCallback(
+    (files: FileList | null) => {
+      if (files && files[0]) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onloadstart = () => setIsProcessing(true);
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            const img = new window.Image();
+            img.onload = () => {
+              setWidth(img.width);
+              setHeight(img.height);
+              setImage(result);
+              // Simulate background removal and set as processedImage
+              // In a real app, this would be an API call
+              setTimeout(() => {
+                setProcessedImage(result);
+                setIsProcessing(false);
+                toast({
+                  title: 'Image loaded',
+                  description: 'Background has been removed.',
+                });
+              }, 1500);
+            };
+            img.src = result;
+          };
+          reader.onerror = () => {
             setIsProcessing(false);
             toast({
-              title: 'Image loaded',
-              description: 'Background has been removed.',
+              variant: 'destructive',
+              title: 'Error',
+              description: 'Failed to read file.',
             });
-          }, 1500);
-        };
-        reader.onerror = () => {
-          setIsProcessing(false);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to read file.',
-          });
-        };
-        reader.readAsDataURL(file);
+          };
+          reader.readAsDataURL(file);
+        }
       }
-    }
-  }, [toast]);
+    },
+    [toast]
+  );
 
   const handleGenerateBackground = async () => {
     if (!prompt) {
@@ -149,13 +161,23 @@ export function ImageEditor() {
     }
   };
 
-  const resizePresets = useMemo(() => [
-    { name: 'Tokopedia', width: 1080, height: 1080 },
-    { name: 'Shopee', width: 1080, height: 1080 },
-    { name: 'Instagram Post', width: 1080, height: 1080 },
-    { name: 'Instagram Story', width: 1080, height: 1920 },
-    { name: 'Facebook Post', width: 1200, height: 630 },
-  ], []);
+  const resizePresets = useMemo(
+    () => [
+      { name: 'Tokopedia', width: 1080, height: 1080 },
+      { name: 'Shopee', width: 1080, height: 1080 },
+      { name: 'Instagram Post', width: 1080, height: 1080 },
+      { name: 'Instagram Story', width: 1080, height: 1920 },
+      { name: 'Facebook Post', width: 1200, height: 630 },
+    ],
+    []
+  );
+
+  const handleApplyResize = () => {
+    toast({
+      title: 'Dimensions Applied',
+      description: `Image dimensions set to ${width}x${height}px.`,
+    });
+  };
 
   const handleDownload = () => {
     toast({
@@ -194,7 +216,9 @@ export function ImageEditor() {
                     click to upload
                   </span>
                 </p>
-                <p className="text-xs text-muted-foreground/70 mt-2">PNG, JPG, WEBP supported</p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  PNG, JPG, WEBP supported
+                </p>
               </>
             )}
             <input
@@ -230,15 +254,44 @@ export function ImageEditor() {
                   <Scissors className="mr-2 h-5 w-5" /> Resize & Crop
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-2">
-                   <div className="grid grid-cols-2 gap-2">
-                        {resizePresets.map(p => <Button key={p.name} variant="outline">{p.name}</Button>)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Input type="number" placeholder="Width" className="w-full" />
-                        <span className="text-muted-foreground">x</span>
-                        <Input type="number" placeholder="Height" className="w-full" />
-                    </div>
-                    <Button className="w-full">Apply</Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {resizePresets.map((p) => (
+                      <Button
+                        key={p.name}
+                        variant="outline"
+                        onClick={() => {
+                          setWidth(p.width);
+                          setHeight(p.height);
+                        }}
+                      >
+                        {p.name}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Width"
+                      className="w-full"
+                      value={width}
+                      onChange={(e) =>
+                        setWidth(parseInt(e.target.value, 10) || 0)
+                      }
+                    />
+                    <span className="text-muted-foreground">x</span>
+                    <Input
+                      type="number"
+                      placeholder="Height"
+                      className="w-full"
+                      value={height}
+                      onChange={(e) =>
+                        setHeight(parseInt(e.target.value, 10) || 0)
+                      }
+                    />
+                  </div>
+                  <Button className="w-full" onClick={handleApplyResize}>
+                    Apply
+                  </Button>
                 </AccordionContent>
               </AccordionItem>
 
@@ -290,7 +343,13 @@ export function ImageEditor() {
                         />
                         <div className="flex-1">
                           <p className="font-mono text-lg">{suggestion.color}</p>
-                           <Button size="sm" onClick={() => setBackground(suggestion.color)} className="mt-1">Apply Color</Button>
+                          <Button
+                            size="sm"
+                            onClick={() => setBackground(suggestion.color)}
+                            className="mt-1"
+                          >
+                            Apply Color
+                          </Button>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground italic">
@@ -301,27 +360,35 @@ export function ImageEditor() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-             <Button onClick={handleDownload} size="lg" className="w-full mt-6">
-                <Download className="mr-2 h-5 w-5" />
-                Download Image
+            <Button onClick={handleDownload} size="lg" className="w-full mt-6">
+              <Download className="mr-2 h-5 w-5" />
+              Download Image
             </Button>
           </CardContent>
         </Card>
-        <div className="aspect-square relative flex items-center justify-center overflow-hidden rounded-lg bg-card border">
-            <div 
-                className="absolute inset-0 transition-all duration-300"
-                style={{ background: background, backgroundSize: 'cover', backgroundPosition: 'center' }}
-            ></div>
-            {processedImage && (
-              <Image
-                src={processedImage}
-                alt="Processed product"
-                width={800}
-                height={800}
-                className="relative z-10 max-w-full max-h-full object-contain"
-                style={{ maxWidth: '80%', maxHeight: '80%' }}
-              />
-            )}
+        <div
+          className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
+          style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
+        >
+          <div
+            className="absolute inset-0 transition-all duration-300"
+            style={{
+              background: background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          ></div>
+          {processedImage && (
+            <Image
+              key={`${width}x${height}`}
+              src={processedImage}
+              alt="Processed product"
+              width={width}
+              height={height}
+              className="relative z-10 max-w-full max-h-full object-contain"
+              style={{ maxWidth: '80%', maxHeight: '80%' }}
+            />
+          )}
         </div>
       </div>
       <AlertDialog
@@ -337,7 +404,8 @@ export function ImageEditor() {
           <AlertDialogHeader>
             <AlertDialogTitle>One More Step!</AlertDialogTitle>
             <AlertDialogDescription>
-              To support our free service, please watch a short ad to continue. Premium users enjoy an ad-free experience.
+              To support our free service, please watch a short ad to continue.
+              Premium users enjoy an ad-free experience.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="h-64 bg-secondary flex items-center justify-center rounded-md border">
