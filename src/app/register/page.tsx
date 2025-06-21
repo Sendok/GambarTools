@@ -5,30 +5,33 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] bg-secondary/30 p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold font-headline">Selamat Datang Kembali</CardTitle>
-          <CardDescription>Masukkan kredensial Anda untuk mengakses akun Anda.</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline">Buat Akun</CardTitle>
+          <CardDescription>Isi detail untuk memulai.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nama Lengkap</Label>
+            <Input id="name" type="text" placeholder="John Doe" required />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="m@example.com" required />
           </div>
           <div className="space-y-2">
-             <div className="flex items-center justify-between">
-                <Label htmlFor="password">Kata Sandi</Label>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-accent underline-offset-4 hover:underline">
-                    Lupa kata sandi?
-                </Link>
-            </div>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input id="password" type="password" required />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Konfirmasi Kata Sandi</Label>
+            <Input id="confirm-password" type="password" required />
+          </div>
           <Button type="submit" className="w-full" size="lg">
-            Masuk
+            Daftar
           </Button>
           <Separator className="my-6">
             <span className="px-4 bg-card text-muted-foreground">ATAU</span>
@@ -40,9 +43,9 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
-            Belum punya akun?{' '}
-            <Link href="/register" className="text-accent font-semibold hover:underline">
-              Daftar
+            Sudah punya akun?{' '}
+            <Link href="/login" className="text-accent font-semibold hover:underline">
+              Masuk
             </Link>
           </p>
         </CardFooter>
