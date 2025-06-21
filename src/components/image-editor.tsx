@@ -120,21 +120,20 @@ export function ImageEditor() {
     [toast]
   );
   
-  const handleRemoveBackground = () => {
+  const handleRemoveBackground = async () => {
     if (!image) return;
     setIsRemovingBg(true);
     // Simulate background removal API call
-    setTimeout(() => {
-      // In a real app, the processedImage would be set to the result from an API.
-      // For this simulation, we'll just mark it as removed.
-      setProcessedImage(image); 
-      setIsBgRemoved(true);
-      setIsRemovingBg(false);
-      toast({
-        title: 'Success!',
-        description: 'Background has been removed. You can now use AI tools.',
-      });
-    }, 1500);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    // In a real app, the processedImage would be set to the result from an API.
+    // For this simulation, we'll just mark it as removed.
+    setProcessedImage(image); 
+    setIsBgRemoved(true);
+    setIsRemovingBg(false);
+    toast({
+      title: 'Success!',
+      description: 'Background has been removed. You can now use AI tools.',
+    });
   };
 
   const handleGenerateBackground = async () => {
@@ -207,7 +206,7 @@ export function ImageEditor() {
     []
   );
 
-  const handleApplyResize = () => {
+  const handleApplyResize = async () => {
     toast({
       title: 'Dimensions Applied',
       description: `Image dimensions set to ${width}x${height}px.`,
@@ -360,6 +359,32 @@ export function ImageEditor() {
   return (
     <>
       <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full flex-1 order-1 lg:order-2">
+          <div
+            className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
+            style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
+          >
+            <div
+              className="absolute inset-0 transition-all duration-300"
+              style={{
+                background: background,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            ></div>
+            {processedImage && (
+              <Image
+                key={`${width}x${height}`}
+                src={processedImage}
+                alt="Processed product"
+                width={width}
+                height={height}
+                className="relative z-10 max-w-full max-h-full object-contain"
+                style={{ maxWidth: '80%', maxHeight: '80%' }}
+              />
+            )}
+          </div>
+        </div>
         <div className="w-full lg:w-[400px] lg:flex-none order-2 lg:order-1">
           <Card className="lg:sticky top-24">
             <CardHeader>
@@ -368,7 +393,7 @@ export function ImageEditor() {
             <CardContent>
               <div className="space-y-2 mb-4">
                   <Button
-                      onClick={handleRemoveBackground}
+                      onClick={() => triggerActionWithAd(handleRemoveBackground)}
                       disabled={isBgRemoved || isRemovingBg}
                       className="w-full"
                   >
@@ -432,7 +457,7 @@ export function ImageEditor() {
                         }
                       />
                     </div>
-                    <Button className="w-full" onClick={handleApplyResize}>
+                    <Button className="w-full" onClick={() => triggerActionWithAd(handleApplyResize)}>
                       Apply
                     </Button>
                   </AccordionContent>
@@ -530,32 +555,6 @@ export function ImageEditor() {
               </div>
             </CardContent>
           </Card>
-        </div>
-        <div className="w-full flex-1 order-1 lg:order-2">
-          <div
-            className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
-            style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
-          >
-            <div
-              className="absolute inset-0 transition-all duration-300"
-              style={{
-                background: background,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            ></div>
-            {processedImage && (
-              <Image
-                key={`${width}x${height}`}
-                src={processedImage}
-                alt="Processed product"
-                width={width}
-                height={height}
-                className="relative z-10 max-w-full max-h-full object-contain"
-                style={{ maxWidth: '80%', maxHeight: '80%' }}
-              />
-            )}
-          </div>
         </div>
       </div>
       <AlertDialog
