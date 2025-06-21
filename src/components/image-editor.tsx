@@ -10,6 +10,7 @@ import {
   Paintbrush,
   Sparkles,
   RotateCcw,
+  X,
 } from 'lucide-react';
 import { generateBackgroundFromPrompt } from '@/ai/flows/generate-background-from-prompt';
 import { suggestColorBackground } from '@/ai/flows/suggest-color-background';
@@ -57,10 +58,25 @@ export function ImageEditor() {
   const [originalWidth, setOriginalWidth] = useState(800);
   const [originalHeight, setOriginalHeight] = useState(800);
 
+  const [isBgRemoved, setIsBgRemoved] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+
   const triggerActionWithAd = (action: () => Promise<void>) => {
     // For demonstration, we assume the user is not premium
     setPendingAction(() => action);
     setShowAdModal(true);
+  };
+
+  const handleChangeImage = () => {
+    setImage(null);
+    setProcessedImage(null);
+    setBackground('hsl(var(--card))');
+    setPrompt('');
+    setSuggestion(null);
+    setIsProcessing(false);
+    setIsBgRemoved(false);
+    setIsRemovingBg(false);
+    setActiveTool('resize');
   };
 
   const handleFileChange = useCallback(
@@ -79,16 +95,13 @@ export function ImageEditor() {
               setWidth(img.width);
               setHeight(img.height);
               setImage(result);
-              // Simulate background removal and set as processedImage
-              // In a real app, this would be an API call
-              setTimeout(() => {
-                setProcessedImage(result);
-                setIsProcessing(false);
-                toast({
-                  title: 'Image loaded',
-                  description: 'Background has been removed.',
-                });
-              }, 1500);
+              setProcessedImage(result); // Initially, processed is same as original
+              setIsBgRemoved(false); // Reset bg removal state
+              setIsProcessing(false);
+              toast({
+                title: 'Image loaded',
+                description: 'Click "Remove Background" to enable AI features.',
+              });
             };
             img.src = result;
           };
@@ -106,6 +119,23 @@ export function ImageEditor() {
     },
     [toast]
   );
+  
+  const handleRemoveBackground = () => {
+    if (!image) return;
+    setIsRemovingBg(true);
+    // Simulate background removal API call
+    setTimeout(() => {
+      // In a real app, the processedImage would be set to the result from an API.
+      // For this simulation, we'll just mark it as removed.
+      setProcessedImage(image); 
+      setIsBgRemoved(true);
+      setIsRemovingBg(false);
+      toast({
+        title: 'Success!',
+        description: 'Background has been removed. You can now use AI tools.',
+      });
+    }, 1500);
+  };
 
   const handleGenerateBackground = async () => {
     if (!prompt) {
@@ -272,6 +302,7 @@ export function ImageEditor() {
     setPrompt('');
     setSuggestion(null);
     setActiveTool('resize');
+    setIsBgRemoved(false);
     toast({
       title: 'Image Reset',
       description: 'All edits have been reverted.',
@@ -334,6 +365,26 @@ export function ImageEditor() {
             <CardTitle>Editing Tools</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="space-y-2 mb-4">
+                <Button
+                    onClick={handleRemoveBackground}
+                    disabled={isBgRemoved || isRemovingBg}
+                    className="w-full"
+                >
+                    {isRemovingBg ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Scissors className="mr-2 h-4 w-4" />
+                    )}
+                    {isBgRemoved ? 'Background Removed' : 'Remove Background'}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center px-2">
+                    {isBgRemoved 
+                        ? "You can now use AI background tools." 
+                        : "Remove the background to unlock AI features."}
+                </p>
+            </div>
+            
             <Accordion
               type="single"
               collapsible
@@ -386,7 +437,7 @@ export function ImageEditor() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="ai-background">
+              <AccordionItem value="ai-background" disabled={!isBgRemoved}>
                 <AccordionTrigger className="text-base font-semibold">
                   <Sparkles className="mr-2 h-5 w-5" /> AI Custom Background
                 </AccordionTrigger>
@@ -395,10 +446,11 @@ export function ImageEditor() {
                     placeholder="e.g., a marble podium with soft lighting"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
+                    disabled={!isBgRemoved}
                   />
                   <Button
                     onClick={() => triggerActionWithAd(handleGenerateBackground)}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isBgRemoved}
                     className="w-full"
                   >
                     {isProcessing && activeTool === 'ai-background' ? (
@@ -409,14 +461,14 @@ export function ImageEditor() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="ai-color">
+              <AccordionItem value="ai-color" disabled={!isBgRemoved}>
                 <AccordionTrigger className="text-base font-semibold">
                   <Paintbrush className="mr-2 h-5 w-5" /> AI Color Background
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-2">
                   <Button
                     onClick={() => triggerActionWithAd(handleSuggestColor)}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isBgRemoved}
                     className="w-full"
                     variant="outline"
                   >
@@ -463,7 +515,16 @@ export function ImageEditor() {
                 variant="outline"
               >
                 <RotateCcw className="mr-2 h-5 w-5" />
-                Reset Image
+                Reset Edits
+              </Button>
+              <Button
+                onClick={handleChangeImage}
+                size="lg"
+                className="w-full"
+                variant="ghost"
+              >
+                <X className="mr-2 h-5 w-5" />
+                Change Image
               </Button>
             </div>
           </CardContent>
