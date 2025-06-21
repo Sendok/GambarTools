@@ -17,7 +17,7 @@ export function Header() {
   const navLinks = [
     { href: '/premium', label: 'Premium' },
     { href: '/blog', label: 'Blog' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/contact', label: 'Kontak' },
   ];
 
   return (
@@ -36,8 +36,11 @@ export function Header() {
             {link.label}
           </Link>
         ))}
+        <Button asChild variant="ghost">
+          <Link href="/login">Masuk</Link>
+        </Button>
         <Button asChild>
-          <Link href="/login">Login</Link>
+          <Link href="/register">Daftar</Link>
         </Button>
       </nav>
       <div className="ml-auto md:hidden">
@@ -72,10 +75,15 @@ export function Header() {
                   </SheetClose>
                 ))}
               </nav>
-              <div className="mt-auto border-t pt-4">
+              <div className="mt-auto flex flex-col gap-2 border-t pt-4">
+                <SheetClose asChild>
+                  <Button asChild className="w-full" variant="ghost">
+                    <Link href="/login">Masuk</Link>
+                  </Button>
+                </SheetClose>
                 <SheetClose asChild>
                   <Button asChild className="w-full">
-                    <Link href="/login">Login</Link>
+                    <Link href="/register">Daftar</Link>
                   </Button>
                 </SheetClose>
               </div>
