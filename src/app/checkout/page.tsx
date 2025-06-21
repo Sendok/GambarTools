@@ -59,14 +59,14 @@ export default function CheckoutPage() {
               <div>
                 <h3 className="text-xl font-semibold mb-4 text-center">Select Payment Method</h3>
                  <div className="space-y-4">
-                    <Button size="lg" className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button size="lg" className="w-full h-14">
                         <CreditCard className="mr-2"/>
                         Pay with Card (Stripe)
                     </Button>
-                     <Button size="lg" variant="outline" className="w-full h-14 bg-black text-white hover:bg-gray-800 hover:text-white border-white/20">
+                     <Button size="lg" variant="outline" className="w-full h-14">
                         Pay with Apple / Google Pay
                     </Button>
-                    <Button size="lg" className="w-full h-14 bg-[#00457C] hover:bg-[#003057] text-white">
+                    <Button size="lg" className="w-full h-14">
                          Pay with PayPal
                     </Button>
                     <p className="text-center text-xs text-muted-foreground mt-2">
