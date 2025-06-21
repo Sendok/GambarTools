@@ -359,199 +359,203 @@ export function ImageEditor() {
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,400px)_1fr] gap-8 items-start">
-        <Card className="sticky top-24">
-          <CardHeader>
-            <CardTitle>Editing Tools</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 mb-4">
-                <Button
-                    onClick={handleRemoveBackground}
-                    disabled={isBgRemoved || isRemovingBg}
-                    className="w-full"
-                >
-                    {isRemovingBg ? (
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full lg:w-[400px] lg:flex-none order-2 lg:order-1">
+          <Card className="lg:sticky top-24">
+            <CardHeader>
+              <CardTitle>Editing Tools</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 mb-4">
+                  <Button
+                      onClick={handleRemoveBackground}
+                      disabled={isBgRemoved || isRemovingBg}
+                      className="w-full"
+                  >
+                      {isRemovingBg ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                          <Scissors className="mr-2 h-4 w-4" />
+                      )}
+                      {isBgRemoved ? 'Background Removed' : 'Remove Background'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                      {isBgRemoved 
+                          ? "You can now use AI background tools." 
+                          : "Remove the background to unlock AI features."}
+                  </p>
+              </div>
+              
+              <Accordion
+                type="single"
+                collapsible
+                value={activeTool}
+                onValueChange={setActiveTool}
+              >
+                <AccordionItem value="resize">
+                  <AccordionTrigger className="text-base font-semibold">
+                    <Scissors className="mr-2 h-5 w-5" /> Resize & Crop
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {resizePresets.map((p) => (
+                        <Button
+                          key={p.name}
+                          variant="outline"
+                          onClick={() => {
+                            setWidth(p.width);
+                            setHeight(p.height);
+                          }}
+                        >
+                          {p.name}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Width"
+                        className="w-full"
+                        value={width}
+                        onChange={(e) =>
+                          setWidth(parseInt(e.target.value, 10) || 0)
+                        }
+                      />
+                      <span className="text-muted-foreground">x</span>
+                      <Input
+                        type="number"
+                        placeholder="Height"
+                        className="w-full"
+                        value={height}
+                        onChange={(e) =>
+                          setHeight(parseInt(e.target.value, 10) || 0)
+                        }
+                      />
+                    </div>
+                    <Button className="w-full" onClick={handleApplyResize}>
+                      Apply
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="ai-background" disabled={!isBgRemoved}>
+                  <AccordionTrigger className="text-base font-semibold">
+                    <Sparkles className="mr-2 h-5 w-5" /> AI Custom Background
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-2">
+                    <Textarea
+                      placeholder="e.g., a marble podium with soft lighting"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      disabled={!isBgRemoved}
+                    />
+                    <Button
+                      onClick={() => triggerActionWithAd(handleGenerateBackground)}
+                      disabled={isProcessing || !isBgRemoved}
+                      className="w-full"
+                    >
+                      {isProcessing && activeTool === 'ai-background' ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Scissors className="mr-2 h-4 w-4" />
-                    )}
-                    {isBgRemoved ? 'Background Removed' : 'Remove Background'}
-                </Button>
-                <p className="text-xs text-muted-foreground text-center px-2">
-                    {isBgRemoved 
-                        ? "You can now use AI background tools." 
-                        : "Remove the background to unlock AI features."}
-                </p>
-            </div>
-            
-            <Accordion
-              type="single"
-              collapsible
-              value={activeTool}
-              onValueChange={setActiveTool}
-            >
-              <AccordionItem value="resize">
-                <AccordionTrigger className="text-base font-semibold">
-                  <Scissors className="mr-2 h-5 w-5" /> Resize & Crop
-                </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    {resizePresets.map((p) => (
-                      <Button
-                        key={p.name}
-                        variant="outline"
-                        onClick={() => {
-                          setWidth(p.width);
-                          setHeight(p.height);
-                        }}
-                      >
-                        {p.name}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Width"
-                      className="w-full"
-                      value={width}
-                      onChange={(e) =>
-                        setWidth(parseInt(e.target.value, 10) || 0)
-                      }
-                    />
-                    <span className="text-muted-foreground">x</span>
-                    <Input
-                      type="number"
-                      placeholder="Height"
-                      className="w-full"
-                      value={height}
-                      onChange={(e) =>
-                        setHeight(parseInt(e.target.value, 10) || 0)
-                      }
-                    />
-                  </div>
-                  <Button className="w-full" onClick={handleApplyResize}>
-                    Apply
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
+                      ) : null}
+                      Generate
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
 
-              <AccordionItem value="ai-background" disabled={!isBgRemoved}>
-                <AccordionTrigger className="text-base font-semibold">
-                  <Sparkles className="mr-2 h-5 w-5" /> AI Custom Background
-                </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-2">
-                  <Textarea
-                    placeholder="e.g., a marble podium with soft lighting"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    disabled={!isBgRemoved}
-                  />
-                  <Button
-                    onClick={() => triggerActionWithAd(handleGenerateBackground)}
-                    disabled={isProcessing || !isBgRemoved}
-                    className="w-full"
-                  >
-                    {isProcessing && activeTool === 'ai-background' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Generate
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="ai-color" disabled={!isBgRemoved}>
-                <AccordionTrigger className="text-base font-semibold">
-                  <Paintbrush className="mr-2 h-5 w-5" /> AI Color Background
-                </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-2">
-                  <Button
-                    onClick={() => triggerActionWithAd(handleSuggestColor)}
-                    disabled={isProcessing || !isBgRemoved}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    {isProcessing && activeTool === 'ai-color' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Suggest a Color
-                  </Button>
-                  {suggestion && (
-                    <Card className="bg-secondary p-4">
-                      <div className="flex items-center gap-4 mb-2">
-                        <div
-                          style={{ backgroundColor: suggestion.color }}
-                          className="w-10 h-10 rounded-full border-2 border-border"
-                        />
-                        <div className="flex-1">
-                          <p className="font-mono text-lg">{suggestion.color}</p>
-                          <Button
-                            size="sm"
-                            onClick={() => setBackground(suggestion.color)}
-                            className="mt-1"
-                          >
-                            Apply Color
-                          </Button>
+                <AccordionItem value="ai-color" disabled={!isBgRemoved}>
+                  <AccordionTrigger className="text-base font-semibold">
+                    <Paintbrush className="mr-2 h-5 w-5" /> AI Color Background
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-2">
+                    <Button
+                      onClick={() => triggerActionWithAd(handleSuggestColor)}
+                      disabled={isProcessing || !isBgRemoved}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {isProcessing && activeTool === 'ai-color' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      Suggest a Color
+                    </Button>
+                    {suggestion && (
+                      <Card className="bg-secondary p-4">
+                        <div className="flex items-center gap-4 mb-2">
+                          <div
+                            style={{ backgroundColor: suggestion.color }}
+                            className="w-10 h-10 rounded-full border-2 border-border"
+                          />
+                          <div className="flex-1">
+                            <p className="font-mono text-lg">{suggestion.color}</p>
+                            <Button
+                              size="sm"
+                              onClick={() => setBackground(suggestion.color)}
+                              className="mt-1"
+                            >
+                              Apply Color
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground italic">
-                        &quot;{suggestion.reason}&quot;
-                      </p>
-                    </Card>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <div className="mt-6 flex flex-col gap-2">
-              <Button onClick={handleDownload} size="lg" className="w-full">
-                <Download className="mr-2 h-5 w-5" />
-                Download Image
-              </Button>
-              <Button
-                onClick={handleReset}
-                size="lg"
-                className="w-full"
-                variant="outline"
-              >
-                <RotateCcw className="mr-2 h-5 w-5" />
-                Reset Edits
-              </Button>
-              <Button
-                onClick={handleChangeImage}
-                size="lg"
-                className="w-full"
-                variant="ghost"
-              >
-                <X className="mr-2 h-5 w-5" />
-                Change Image
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <div
-          className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
-          style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
-        >
+                        <p className="text-sm text-muted-foreground italic">
+                          &quot;{suggestion.reason}&quot;
+                        </p>
+                      </Card>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              <div className="mt-6 flex flex-col gap-2">
+                <Button onClick={handleDownload} size="lg" className="w-full">
+                  <Download className="mr-2 h-5 w-5" />
+                  Download Image
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  size="lg"
+                  className="w-full"
+                  variant="outline"
+                >
+                  <RotateCcw className="mr-2 h-5 w-5" />
+                  Reset Edits
+                </Button>
+                <Button
+                  onClick={handleChangeImage}
+                  size="lg"
+                  className="w-full"
+                  variant="ghost"
+                >
+                  <X className="mr-2 h-5 w-5" />
+                  Change Image
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="w-full flex-1 order-1 lg:order-2">
           <div
-            className="absolute inset-0 transition-all duration-300"
-            style={{
-              background: background,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          ></div>
-          {processedImage && (
-            <Image
-              key={`${width}x${height}`}
-              src={processedImage}
-              alt="Processed product"
-              width={width}
-              height={height}
-              className="relative z-10 max-w-full max-h-full object-contain"
-              style={{ maxWidth: '80%', maxHeight: '80%' }}
-            />
-          )}
+            className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
+            style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
+          >
+            <div
+              className="absolute inset-0 transition-all duration-300"
+              style={{
+                background: background,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            ></div>
+            {processedImage && (
+              <Image
+                key={`${width}x${height}`}
+                src={processedImage}
+                alt="Processed product"
+                width={width}
+                height={height}
+                className="relative z-10 max-w-full max-h-full object-contain"
+                style={{ maxWidth: '80%', maxHeight: '80%' }}
+              />
+            )}
+          </div>
         </div>
       </div>
       <AlertDialog
