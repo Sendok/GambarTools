@@ -72,13 +72,9 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none">
-                <Image
-                  src="/profile-dummy.png"
-                  alt="Profile"
-                  width={32}
-                  height={32}
-                  className="rounded-full border"
-                />
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-base font-bold text-accent border">
+                  {(user.displayName?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                </div>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -147,13 +143,9 @@ export function Header() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-2 outline-none w-full justify-start px-2 py-1.5">
-                          <Image
-                            src="/profile-dummy.png"
-                            alt="Profile"
-                            width={32}
-                            height={32}
-                            className="rounded-full border"
-                          />
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-base font-bold text-accent border">
+                            {(user.displayName?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                          </div>
                           <span>{user.displayName || user.email}</span>
                         </button>
                       </DropdownMenuTrigger>
