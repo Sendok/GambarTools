@@ -57,6 +57,7 @@ export function ImageEditor() {
   const [height, setHeight] = useState(800);
   const [originalWidth, setOriginalWidth] = useState(800);
   const [originalHeight, setOriginalHeight] = useState(800);
+  const [originalName, setOriginalName] = useState<string>('image');
 
   const [isBgRemoved, setIsBgRemoved] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
@@ -83,6 +84,7 @@ export function ImageEditor() {
     (files: FileList | null) => {
       if (files && files[0]) {
         const file = files[0];
+        setOriginalName(file.name.replace(/\.[^/.]+$/, ''));
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onloadstart = () => setIsProcessing(true);
@@ -123,17 +125,81 @@ export function ImageEditor() {
   const handleRemoveBackground = async () => {
     if (!image) return;
     setIsRemovingBg(true);
-    // Simulate background removal API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    // In a real app, the processedImage would be set to the result from an API.
-    // For this simulation, we'll just mark it as removed.
-    setProcessedImage(image); 
-    setIsBgRemoved(true);
-    setIsRemovingBg(false);
-    toast({
-      title: 'Success!',
-      description: 'Background has been removed. You can now use AI tools.',
-    });
+
+    // Deteksi background sederhana atau tidak
+    const simple = await isSimpleBackground(image);
+
+    if (simple) {
+      // --- SIMULASI: hapus background putih/terang ---
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            if (r > 240 && g > 240 && b > 240) data[i + 3] = 0;
+          }
+          ctx.putImageData(imageData, 0, 0);
+          const processedDataUrl = canvas.toDataURL('image/png');
+          setProcessedImage(processedDataUrl);
+          setIsBgRemoved(true);
+          setIsRemovingBg(false);
+          toast({
+            title: 'Simulation Complete',
+            description: 'Simple background removal applied.',
+          });
+        }
+      };
+      img.onerror = () => {
+        setIsRemovingBg(false);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to process image.',
+        });
+      };
+      img.src = image;
+      return;
+    }
+
+    // --- API: jika background kompleks ---
+    try {
+      const res = await fetch(image);
+      const blob = await res.blob();
+      const file = new File([blob], `${originalName}.png`, { type: blob.type });
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/remove-background', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('API error');
+
+      const data = await response.json();
+      setProcessedImage(data.processedImage);
+      setIsBgRemoved(true);
+      setIsRemovingBg(false);
+
+      toast({
+        title: 'Success!',
+        description: 'Background has been removed. You can now use AI tools.',
+      });
+    } catch (error) {
+      setIsRemovingBg(false);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to remove background.',
+      });
+    }
   };
 
   const handleGenerateBackground = async () => {
@@ -149,6 +215,8 @@ export function ImageEditor() {
     try {
       const result = await generateBackgroundFromPrompt({
         backgroundPrompt: prompt,
+        width,   // pass current width
+        height,  // pass current height
       });
       setBackground(`url(${result.generatedBackground})`);
       toast({
@@ -220,19 +288,13 @@ export function ImageEditor() {
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    if (!ctx) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to create image canvas.',
-      });
-      return;
-    }
-
+    // Fungsi untuk menggambar produk di atas background
     const drawProductImage = () => {
       const img = new window.Image();
       img.onload = () => {
+        // Gambar produk di atas background
         const hRatio = canvas.width / img.width;
         const vRatio = canvas.height / img.height;
         const ratio = Math.min(hRatio, vRatio) * 0.8;
@@ -240,52 +302,50 @@ export function ImageEditor() {
         const newHeight = img.height * ratio;
         const x = (canvas.width - newWidth) / 2;
         const y = (canvas.height - newHeight) / 2;
-
         ctx.drawImage(img, x, y, newWidth, newHeight);
 
+        // Download
         const link = document.createElement('a');
-        link.download = 'edited-image.png';
+        link.download = `${originalName}_gambartools_${width}x${height}.png`;
         link.href = canvas.toDataURL('image/png');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        toast({
-          title: 'Download Started',
-          description: 'Your image is being prepared.',
-        });
-      };
-      img.onerror = () => {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to load product image for download.',
-        });
+        toast({ title: 'Download Started', description: 'Your image is being downloaded.' });
       };
       img.src = processedImage;
     };
 
+    // --- Gambar background dulu ---
     if (background.startsWith('url')) {
-      const bgImg = new window.Image();
-      bgImg.crossOrigin = 'Anonymous';
-      bgImg.onload = () => {
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-        drawProductImage();
-      };
-      bgImg.onerror = () => {
-        ctx.fillStyle = 'hsl(var(--card))';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawProductImage();
-      };
+      // Ambil url dari background: url("data:image/png;base64,...")
       const bgUrl = background.match(/url\("?(.*?)"?\)/)?.[1];
       if (bgUrl) {
+        const bgImg = new window.Image();
+        bgImg.crossOrigin = 'Anonymous';
+        bgImg.onload = () => {
+          // Gambar background custom/AI
+          ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+          drawProductImage();
+        };
+        bgImg.onerror = () => {
+          // Jika gagal, fallback ke putih
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          drawProductImage();
+        };
         bgImg.src = bgUrl;
       } else {
-        ctx.fillStyle = 'hsl(var(--card))';
+        // Jika tidak ada url, fallback ke putih
+        ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawProductImage();
       }
+    } else if (background === 'transparent') {
+      // Biarkan canvas transparan
+      drawProductImage();
     } else {
+      // Warna solid
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawProductImage();
@@ -307,6 +367,31 @@ export function ImageEditor() {
       description: 'All edits have been reverted.',
     });
   };
+
+  function isSimpleBackground(image: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(false);
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let whiteCount = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          if (r > 240 && g > 240 && b > 240) whiteCount++;
+        }
+        const percentWhite = whiteCount / (data.length / 4);
+        resolve(percentWhite > 0.5); // Jika >50% pixel putih/terang, dianggap simple
+      };
+      img.onerror = () => resolve(false);
+      img.src = image;
+    });
+  }
 
   if (!image) {
     return (
@@ -364,14 +449,38 @@ export function ImageEditor() {
             className="relative flex items-center justify-center overflow-hidden rounded-lg bg-card border"
             style={{ aspectRatio: width && height ? `${width} / ${height}` : '1 / 1' }}
           >
-            <div
-              className="absolute inset-0 transition-all duration-300"
-              style={{
-                background: background,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            ></div>
+            {/* Background Layer */}
+            {background.startsWith('url') ? (
+              <img
+                src={background.match(/url\("?(.*?)"?\)/)?.[1] || ''}
+                alt="Background"
+                width={width}
+                height={height}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'fill',
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+                draggable={false}
+              />
+            ) : (
+              <div
+                className="absolute inset-0 transition-all duration-300"
+                style={{
+                  background: background,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 0,
+                }}
+              />
+            )}
+
+            {/* Product Image Layer */}
             {processedImage && (
               <Image
                 key={`${width}x${height}`}
@@ -395,7 +504,7 @@ export function ImageEditor() {
                   <Button
                       onClick={() => triggerActionWithAd(handleRemoveBackground)}
                       disabled={isBgRemoved || isRemovingBg}
-                      className="w-full"
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
                   >
                       {isRemovingBg ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -404,11 +513,6 @@ export function ImageEditor() {
                       )}
                       {isBgRemoved ? 'Background Removed' : 'Remove Background'}
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center px-2">
-                      {isBgRemoved 
-                          ? "You can now use AI background tools." 
-                          : "Remove the background to unlock AI features."}
-                  </p>
               </div>
               
               <Accordion
@@ -457,13 +561,16 @@ export function ImageEditor() {
                         }
                       />
                     </div>
-                    <Button className="w-full" onClick={() => triggerActionWithAd(handleApplyResize)}>
+                    <Button
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+                      onClick={() => triggerActionWithAd(handleApplyResize)}
+                    >
                       Apply
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="ai-background" disabled={!isBgRemoved}>
+                <AccordionItem value="ai-background">
                   <AccordionTrigger className="text-base font-semibold">
                     <Sparkles className="mr-2 h-5 w-5" /> AI Custom Background
                   </AccordionTrigger>
@@ -472,12 +579,11 @@ export function ImageEditor() {
                       placeholder="e.g., a marble podium with soft lighting"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      disabled={!isBgRemoved}
                     />
                     <Button
                       onClick={() => triggerActionWithAd(handleGenerateBackground)}
-                      disabled={isProcessing || !isBgRemoved}
-                      className="w-full"
+                      disabled={isProcessing}
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
                     >
                       {isProcessing && activeTool === 'ai-background' ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -487,14 +593,14 @@ export function ImageEditor() {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="ai-color" disabled={!isBgRemoved}>
+                <AccordionItem value="ai-color">
                   <AccordionTrigger className="text-base font-semibold">
                     <Paintbrush className="mr-2 h-5 w-5" /> AI Color Background
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-2">
                     <Button
                       onClick={() => triggerActionWithAd(handleSuggestColor)}
-                      disabled={isProcessing || !isBgRemoved}
+                      disabled={isProcessing}
                       className="w-full"
                       variant="outline"
                     >
@@ -530,7 +636,7 @@ export function ImageEditor() {
                 </AccordionItem>
               </Accordion>
               <div className="mt-6 flex flex-col gap-2">
-                <Button onClick={handleDownload} size="lg" className="w-full">
+                <Button onClick={handleDownload} size="lg" className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   <Download className="mr-2 h-5 w-5" />
                   Download Image
                 </Button>
@@ -582,6 +688,7 @@ export function ImageEditor() {
               <Link href="/premium">Upgrade to Premium</Link>
             </Button>
             <AlertDialogAction
+            className="bg-cyan-500 hover:bg-cyan-600 text-white"
               onClick={async () => {
                 if (pendingAction) {
                   await pendingAction();

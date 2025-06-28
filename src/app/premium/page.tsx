@@ -24,7 +24,7 @@ export default function PremiumPage() {
               Go <span className="text-accent">Premium</span>
             </h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-              Unlock the full potential of EditClean with our premium features. No ads, higher quality, and priority support.
+              Unlock the full potential of GambarTools with our premium features. No ads, higher quality, and priority support.
             </p>
           </div>
         </section>
@@ -73,7 +73,7 @@ export default function PremiumPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button asChild className="w-full" size="lg">
+                  <Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white w-full" size="lg">
                     <Link href="/checkout">Choose Monthly</Link>
                   </Button>
                 </CardFooter>

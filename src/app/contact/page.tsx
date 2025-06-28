@@ -32,8 +32,8 @@ export default function ContactPage() {
                       <p className="text-muted-foreground">
                         Our support team will get back to you within 24 hours.
                       </p>
-                      <a href="mailto:support@editclean.app" className="text-accent hover:underline">
-                        support@editclean.app
+                      <a href="mailto:tummistudio3@gmail.com" className="text-accent hover:underline">
+                        tummistudio3@gmail.com
                       </a>
                     </div>
                   </div>
@@ -44,8 +44,8 @@ export default function ContactPage() {
                       <p className="text-muted-foreground">
                         For urgent inquiries, please call us.
                       </p>
-                      <a href="tel:+1234567890" className="text-accent hover:underline">
-                        +1 (234) 567-890
+                      <a href="tel:+6285791566727" className="text-accent hover:underline">
+                        +62 857-9156-6727
                       </a>
                     </div>
                   </div>
