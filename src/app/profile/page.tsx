@@ -1,6 +1,7 @@
 'use client';
 import { auth } from '@/lib/firebase';
 import { updateProfile } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -9,21 +10,29 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
+const db = getFirestore();
+
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
+  const [billingPlan, setBillingPlan] = useState('free');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(u => {
+    const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) router.push('/login');
       setUser(u);
       setDisplayName(u?.displayName || '');
       setEmail(u?.email || '');
+      // Ambil billing plan dari Firestore
+      if (u) {
+        const userDoc = await getDoc(doc(db, 'users', u.uid));
+        setBillingPlan(userDoc.exists() ? userDoc.data().billingPlan : 'free');
+      }
     });
     return () => unsub();
   }, [router]);
@@ -87,13 +96,24 @@ export default function ProfilePage() {
             <div className="space-y-2 text-center">
               <div className="text-lg font-semibold">{user.displayName}</div>
               <div className="text-muted-foreground">{user.email}</div>
+              <div className="text-sm text-center mt-2">
+                <span className="font-semibold">Billing Plan: </span>
+                <span className={
+                  billingPlan === 'free'
+                    ? 'text-yellow-600'
+                    : 'text-green-600'
+                }>
+                  {billingPlan === 'free'
+                    ? 'Free'
+                    : billingPlan === 'premium_monthly'
+                      ? 'Premium Monthly'
+                      : 'Premium Yearly'}
+                </span>
+              </div>
             </div>
           )}
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
-          <Link href="/profile/setting" className="w-full">
-            <Button variant="outline" className="w-full">Setting</Button>
-          </Link>
           <Link href="/profile/billing" className="w-full">
             <Button variant="outline" className="w-full">Billing Plan</Button>
           </Link>

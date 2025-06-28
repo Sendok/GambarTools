@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import {
   UploadCloud,
@@ -35,6 +35,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { Input } from './ui/input';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 
 export function ImageEditor() {
   const [image, setImage] = useState<string | null>(null);
@@ -61,11 +63,32 @@ export function ImageEditor() {
 
   const [isBgRemoved, setIsBgRemoved] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(async (u) => {
+      if (u) {
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, 'users', u.uid));
+        if (userDoc.exists() && userDoc.data().billingPlan === 'premium_onetime') {
+          setIsPremium(true);
+        } else {
+          setIsPremium(false);
+        }
+      } else {
+        setIsPremium(false);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const triggerActionWithAd = (action: () => Promise<void>) => {
-    // For demonstration, we assume the user is not premium
-    setPendingAction(() => action);
-    setShowAdModal(true);
+    if (isPremium) {
+      action();
+    } else {
+      setPendingAction(() => action);
+      setShowAdModal(true);
+    }
   };
 
   const handleChangeImage = () => {
@@ -664,7 +687,7 @@ export function ImageEditor() {
         </div>
       </div>
       <AlertDialog
-        open={showAdModal}
+        open={showAdModal && !isPremium}
         onOpenChange={(open) => {
           if (!open) {
             setPendingAction(null);

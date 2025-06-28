@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+
+const db = getFirestore();
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '', error: '' });
@@ -30,7 +33,19 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      // Cek apakah dokumen user sudah ada
+      const userDocRef = doc(db, 'users', result.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        // Jika belum ada, buat dokumen user baru
+        await setDoc(userDocRef, {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          billingPlan: 'free',
+          createdAt: new Date(),
+        });
+      }
       router.push('/');
     } catch (err: any) {
       setForm({ ...form, error: err.message });

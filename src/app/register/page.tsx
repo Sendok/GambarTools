@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+
+const db = getFirestore();
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', error: '' });
@@ -30,6 +33,13 @@ export default function RegisterPage() {
     try {
       const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(userCred.user, { displayName: form.name });
+      // Tambahkan dokumen user di Firestore
+      await setDoc(doc(db, 'users', userCred.user.uid), {
+        email: form.email,
+        displayName: form.name,
+        billingPlan: 'free',
+        createdAt: new Date(),
+      });
       router.push('/');
     } catch (err: any) {
       setForm({ ...form, error: err.message });
