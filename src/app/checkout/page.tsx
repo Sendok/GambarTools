@@ -37,7 +37,7 @@ export default function CheckoutPage() {
 	}, []);
 
 	// Ganti dengan client-id PayPal Anda
-	const PAYPAL_CLIENT_ID = 'ARuW5fjQnXVs5No8AH6RxZqRWEtofod9ie7aId6rNw4l6wPHsR0J39lyPIzn135jzoliypcmJGUS1xwk';
+	const PAYPAL_CLIENT_ID = 'AYC9X23wOL8skj8K0Z72LJyRzjOdkT8LfqbWu5GjbMu9hAtR7hDUd6tiW6ASCsfIlOZkwSQZLWr0TfkC';
 
 	// Logic setelah pembayaran sukses
 	const handleApprove = async () => {
