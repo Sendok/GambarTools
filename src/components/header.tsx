@@ -33,7 +33,7 @@ export function Header() {
 
   const navLinks = [
     { href: '/premium', label: 'Premium' },
-    { href: '/blog', label: 'Insights' },
+    { href: '/blog', label: 'Blog' },
     { href: '/contact', label: 'Contact Us' },
   ];
 

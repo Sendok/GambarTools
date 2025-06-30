@@ -313,7 +313,6 @@ export function ImageEditor() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Fungsi untuk menggambar produk di atas background
     const drawProductImage = () => {
       const img = new window.Image();
       img.onload = () => {
@@ -340,7 +339,10 @@ export function ImageEditor() {
     };
 
     // --- Gambar background dulu ---
-    if (background.startsWith('url')) {
+    if (background === 'transparent' || !background || background.startsWith('hsl(') || background.includes('var(--card)')) {
+      // Biarkan canvas transparan
+      drawProductImage();
+    } else if (background.startsWith('url')) {
       // Ambil url dari background: url("data:image/png;base64,...")
       const bgUrl = background.match(/url\("?(.*?)"?\)/)?.[1];
       if (bgUrl) {
@@ -364,11 +366,8 @@ export function ImageEditor() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawProductImage();
       }
-    } else if (background === 'transparent') {
-      // Biarkan canvas transparan
-      drawProductImage();
     } else {
-      // Warna solid
+      // Warna solid yang valid
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawProductImage();
@@ -704,7 +703,12 @@ export function ImageEditor() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="h-64 bg-secondary flex items-center justify-center rounded-md border">
-            <p className="text-muted-foreground">Advertisement Placeholder</p>
+            {/* <p className="text-muted-foreground">Advertisement Placeholder</p> */}
+            <img
+              src="/adsPlaceholder.png"
+              alt="Advertisement"
+              className="max-h-[200px] max-w-full object-contain"
+            />
           </div>
           <AlertDialogFooter>
             <Button asChild variant="outline">

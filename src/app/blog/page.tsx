@@ -182,7 +182,7 @@ Whether you're a home-based seller or building a brand, good lighting is your be
   {
     title: 'AI That Can Easily Help You',
     description: 'Explore how modern AI tools can simplify your daily tasks, boost productivity, and make life easier for everyone.',
-    image: 'https://placehold.co/600x400.png',
+    image: '4.png',
     hint: 'artificial intelligence, productivity',
     slug: 'ai-that-can-easily-help-you',
     content: `
