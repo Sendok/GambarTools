@@ -1,10 +1,13 @@
-import type { Metadata } from 'next';
+// app/layout.tsx
+
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/header';
 
 export const metadata: Metadata = {
-  title: 'GambarTools - AI Background Remover and AI  Image Editor',
+  title: 'GambarTools - Free AI Background Remover, Pixel Resize and AI Image Editor',
+  description: 'Remove background, resize images, and customize AI background in one click. No hassle.',
   keywords: [
     'AI Background Remover',
     'AI Image Editor',
@@ -50,22 +53,61 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'GambarTools - AI Background Remover and Image Editor',
+    description: 'Remove background, resize images, and customize AI background in one click.',
+    url: 'https://www.gambartools.com',
+    type: 'website',
+    siteName: 'GambarTools',
+    images: [
+      {
+        url: 'https://www.gambartools.com/og-cover.png',
+        width: 1200,
+        height: 630,
+        alt: 'GambarTools Preview',
+      },
+    ],
   },
   twitter: {
     title: 'GambarTools - AI Background Remover and Image Editor',
+    description: 'Remove background, resize images, and customize AI background in one click.',
     card: 'summary_large_image',
+    images: ['https://www.gambartools.com/og-cover.png'],
+    creator: '@gambartools',
   },
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
     shortcut: '/favicon-16x16.png',
+    other: [
+      {
+        rel: 'icon',
+        url: '/favicon-32x32.png',
+      },
+      {
+        rel: 'icon',
+        url: '/android-chrome-192x192.png',
+        sizes: '192x192',
+      },
+    ],
   },
+  manifest: '/site.webmanifest',
   themeColor: '#ffffff',
   colorScheme: 'light dark',
-  description: 'Effortlessly edit your product photos with AI.',
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+    },
+  },
+  alternates: {
+    canonical: 'https://www.gambartools.com',
+  },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   colorScheme: 'dark',
