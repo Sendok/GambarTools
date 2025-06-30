@@ -58,11 +58,13 @@ export default function BillingPage() {
       </div>
       <div className="flex flex-col gap-4">
         <Button
+          asChild
           className="bg-cyan-500 hover:bg-cyan-600 text-white"
           disabled={billingPlan === 'premium_onetime'}
-          onClick={handleCheckout}
         >
-          {billingPlan === 'premium_onetime' ? 'Active' : 'Upgrade to Premium ($10 One Time)'}
+          <a href="/premium">
+            {billingPlan === 'premium_onetime' ? 'Active' : 'Upgrade to Premium ($10 One Time)'}
+          </a>
         </Button>
       </div>
     </div>
