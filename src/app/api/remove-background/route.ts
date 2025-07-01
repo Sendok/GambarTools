@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const forwardForm = new FormData();
   forwardForm.append('file', file, file.name);
 
-  const apiRes = await fetch('https://21ba-114-10-154-180.ngrok-free.app/remove-bg/', {
+  const apiRes = await fetch('https://738f-114-10-154-131.ngrok-free.app/remove-bg/', {
     method: 'POST',
     body: forwardForm,
     // headers: forwardForm.headers, // Jangan set Content-Type manual
