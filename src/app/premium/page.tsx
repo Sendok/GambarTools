@@ -79,8 +79,11 @@ export default function PremiumPage() {
 									</ul>
 								</CardContent>
 								<CardFooter>
-									<Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white w-full" size="lg">
+									{/* <Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white w-full" size="lg">
 										<Link href="/checkout">Buy Now</Link>
+									</Button> */}
+									<Button variant="outline" className="w-full" disabled>
+										it's totally free!
 									</Button>
 								</CardFooter>
 							</Card>

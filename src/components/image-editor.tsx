@@ -174,8 +174,8 @@ export function ImageEditor() {
           setIsBgRemoved(true);
           setIsRemovingBg(false);
           toast({
-            title: 'Simulation Complete',
-            description: 'Simple background removal applied.',
+            title: 'Remove Background Completed',
+            description: 'Background removal applied.',
           });
         }
       };
